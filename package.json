@@ -1,0 +1,16 @@
+{
+  "name": "smart-team-formation-and-challenge-assignment-platform",
+  "version": "1.0.0",
+  "description": "Smart Team Formation and Challenge Assignment Platform - Demon Slayer Theme (PS-10)",
+  "type": "module",
+  "scripts": {
+    "dev:server": "node --watch server/index.js",
+    "dev:client": "npm run dev --prefix client",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "build": "npm run build --prefix client",
+    "start": "node server/index.js"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.4"
+  }
+}
