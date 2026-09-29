@@ -60,6 +60,30 @@ class SoundEffectsManager {
     }
   }
 
+  // Access Denied / Warded Barrier Dissonance Sound
+  playDenied() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+      [180, 168].forEach((freq) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, t);
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.005, t + 0.35);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.36);
+      });
+    } catch (e) {
+      // Ignore
+    }
+  }
+
   // Cinematic Nichirin Katana Draw and Godspeed Slash
   playSwordDrawAndSlash() {
     if (!this.enabled) return;

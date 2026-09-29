@@ -4,6 +4,7 @@ import { Zap, Lock, Mail, Swords, Volume2, VolumeX, ShieldAlert } from 'lucide-r
 import { sfx } from './soundEffects';
 import LiveBackgroundEffect from './LiveBackgroundEffect';
 import SwordSlashTransition from './SwordSlashTransition';
+import AdminPasscodeModal from './AdminPasscodeModal';
 
 export default function LoginPage({
   onLogin,
@@ -60,6 +61,7 @@ export default function LoginPage({
   const [password, setPassword] = useState(presets[0].password);
   const [isSlashing, setIsSlashing] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
+  const [isPasscodeModalOpen, setIsPasscodeModalOpen] = useState(false);
 
   const handleSelectPreset = (p) => {
     setActivePreset(p.id);
@@ -198,7 +200,7 @@ export default function LoginPage({
             type="button"
             onClick={() => {
               sfx.playNakimeShift();
-              if (onOpenAdmin) onOpenAdmin();
+              setIsPasscodeModalOpen(true);
             }}
             className="btn-secondary"
             style={{
@@ -211,7 +213,7 @@ export default function LoginPage({
               fontWeight: 800,
               backdropFilter: 'blur(8px)'
             }}
-            title="Access Kokushibo Moon Admin Console directly from login"
+            title="Access Kokushibo Moon Admin Console (Requires Passcode Clearance)"
           >
             <ShieldAlert size={13} color="#c77dff" />
             <span>🌙 Kokushibo Admin Console</span>
@@ -305,7 +307,7 @@ export default function LoginPage({
             type="button"
             onClick={() => {
               sfx.playNakimeShift();
-              if (onOpenAdmin) onOpenAdmin();
+              setIsPasscodeModalOpen(true);
             }}
             className="btn-secondary"
             style={{
@@ -333,6 +335,16 @@ export default function LoginPage({
           </div>
         </div>
       </div>
+
+      {/* Admin Passcode Clearance Gate Modal */}
+      <AdminPasscodeModal
+        isOpen={isPasscodeModalOpen}
+        onClose={() => setIsPasscodeModalOpen(false)}
+        onSuccess={() => {
+          setIsPasscodeModalOpen(false);
+          if (onOpenAdmin) onOpenAdmin();
+        }}
+      />
     </div>
   );
 }

@@ -31,12 +31,14 @@ import {
   LogOut,
   ShieldAlert,
   Radio,
-  Database
+  Database,
+  Lock
 } from 'lucide-react';
 import { sfx } from './soundEffects';
 import LoginPage from './LoginPage';
 import LiveBackgroundEffect from './LiveBackgroundEffect';
 import AdminPanel from './AdminPanel';
+import AdminPasscodeModal from './AdminPasscodeModal';
 
 const BREATHING_OPTIONS = [
   "Water", "Flame", "Thunder", "Wind", "Stone", "Mist", "Insect", "Flower", "Beast", "Love", "Sound", "Sun", "Moon", "Other"
@@ -84,6 +86,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('command'); // 'command' | 'slayers' | 'missions' | 'demons' | 'matrix'
   const [activeSoundtrack, setActiveSoundtrack] = useState('none'); // 'none' | 'nakime' | 'tanjiro'
   const [isAdminOpen, setIsAdminOpen] = useState(false);
+  const [isPasscodeModalOpen, setIsPasscodeModalOpen] = useState(false);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -488,7 +491,7 @@ export default function App() {
               }}
             >
               <LogOut size={15} color="#ffb703" />
-              <span>← Return to Corps Login Screen (司令部関門へ)</span>
+              <span>{isAuthenticated ? '← Return to Corps Dashboard (司令部へ戻る)' : '← Return to Corps Login Screen (司令部関門へ)'}</span>
             </button>
 
             <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
@@ -637,6 +640,49 @@ export default function App() {
                 </span>
                 <span style={{ color: '#ffd166', opacity: 0.85, fontSize: '11px' }}>({currentUser.role})</span>
               </div>
+            )}
+
+            {/* Admin Console Access Button */}
+            {currentUser?.isAdmin ? (
+              <button
+                onClick={() => {
+                  sfx.playNakimeShift();
+                  setIsAdminOpen(true);
+                }}
+                className="btn-secondary"
+                style={{
+                  borderColor: '#c77dff',
+                  background: 'linear-gradient(135deg, rgba(157, 78, 221, 0.28) 0%, rgba(123, 44, 191, 0.38) 100%)',
+                  color: '#e0aaff',
+                  boxShadow: '0 0 16px rgba(157, 78, 221, 0.45)',
+                  fontWeight: 800,
+                  fontSize: '12px',
+                  padding: '5px 12px'
+                }}
+                title="Open Master Ubuyashiki Admin Console (産屋敷 司令盤)"
+              >
+                <ShieldAlert size={14} color="#c77dff" />
+                <span>⛩️ Admin Console</span>
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  sfx.playNakimeShift();
+                  setIsPasscodeModalOpen(true);
+                }}
+                className="btn-secondary"
+                style={{
+                  borderColor: 'rgba(157, 78, 221, 0.4)',
+                  background: 'rgba(16, 12, 26, 0.75)',
+                  color: '#c77dff',
+                  fontSize: '11px',
+                  padding: '5px 10px'
+                }}
+                title="Access Kokushibo Moon Admin Console (Requires Passcode Verification)"
+              >
+                <Lock size={12} color="#c77dff" />
+                <span>Admin Seal</span>
+              </button>
             )}
 
             {/* Supabase Cloud Database Status Badge */}
@@ -1968,6 +2014,17 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* Admin Passcode Modal for In-Dashboard Authorization */}
+      <AdminPasscodeModal
+        isOpen={isPasscodeModalOpen}
+        onClose={() => setIsPasscodeModalOpen(false)}
+        onSuccess={() => {
+          setIsPasscodeModalOpen(false);
+          setIsAdminOpen(true);
+        }}
+        showToast={showToast}
+      />
       </div>
     </div>
   );
