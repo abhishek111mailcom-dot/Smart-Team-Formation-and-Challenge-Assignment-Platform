@@ -28,10 +28,15 @@ import {
   Skull,
   Eye,
   Crosshair,
-  LogOut
+  LogOut,
+  ShieldAlert,
+  Radio,
+  Database
 } from 'lucide-react';
 import { sfx } from './soundEffects';
 import LoginPage from './LoginPage';
+import LiveBackgroundEffect from './LiveBackgroundEffect';
+import AdminPanel from './AdminPanel';
 
 const BREATHING_OPTIONS = [
   "Water", "Flame", "Thunder", "Wind", "Stone", "Mist", "Insect", "Flower", "Beast", "Love", "Sound", "Sun", "Moon", "Other"
@@ -41,9 +46,44 @@ const ROLES = ["Vanguard", "Recon", "Tactician", "Medical", "Trapper"];
 const RANKS = ["Mizunoto", "Kanoto", "Kanoe", "Hinoto", "Hinoe", "Kinoto", "Kinoe", "Tsuguko", "Hashira"];
 const DANGER_RANKS = ["Rank S", "Rank A", "Rank B", "Rank C", "Rank D"];
 
+const TAB_CONFIGS = {
+  command: {
+    bg: "/images/zenitsu_thunder_colored_bg.jpg",
+    overlay: "linear-gradient(180deg, rgba(7, 9, 14, 0.45) 0%, rgba(10, 13, 22, 0.52) 50%, rgba(7, 9, 14, 0.65) 100%)",
+    effect: 'thunder',
+    title: 'Kasugai Dispatch Command'
+  },
+  slayers: {
+    bg: "/images/wisteria_sanctuary_bg.jpg",
+    overlay: "linear-gradient(180deg, rgba(12, 9, 22, 0.38) 0%, rgba(15, 10, 26, 0.46) 50%, rgba(8, 6, 16, 0.58) 100%)",
+    effect: 'wisteria',
+    title: 'Slayers Roster & Profiles'
+  },
+  missions: {
+    bg: "/images/mount_natagumo_bg.jpg",
+    overlay: "linear-gradient(180deg, rgba(18, 8, 12, 0.40) 0%, rgba(20, 9, 14, 0.48) 50%, rgba(8, 6, 10, 0.60) 100%)",
+    effect: 'embers',
+    title: 'Demon Incursion Missions'
+  },
+  demons: {
+    bg: "/images/infinity_castle_bg.jpg",
+    overlay: "linear-gradient(180deg, rgba(16, 11, 8, 0.38) 0%, rgba(20, 13, 10, 0.46) 50%, rgba(8, 6, 6, 0.58) 100%)",
+    effect: 'lanterns',
+    title: 'Twelve Kizuki Demon Gallery'
+  },
+  matrix: {
+    bg: "/images/infinity_castle_bg.jpg",
+    overlay: "linear-gradient(180deg, rgba(10, 14, 28, 0.42) 0%, rgba(13, 17, 34, 0.50) 50%, rgba(7, 9, 18, 0.62) 100%)",
+    effect: 'elements',
+    title: 'Breathing Synergy & Algorithm Matrix'
+  }
+};
+
 export default function App() {
   // Navigation
   const [activeTab, setActiveTab] = useState('command'); // 'command' | 'slayers' | 'missions' | 'demons' | 'matrix'
+  const [activeSoundtrack, setActiveSoundtrack] = useState('none'); // 'none' | 'nakime' | 'tanjiro'
+  const [isAdminOpen, setIsAdminOpen] = useState(false);
 
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -64,6 +104,9 @@ export default function App() {
     activeSquads: 0,
     readinessIndex: 0
   });
+
+  // Supabase Database State
+  const [dbStatus, setDbStatus] = useState({ connected: false, configured: false });
 
   // UI / Controls
   const [teamSize, setTeamSize] = useState(4);
@@ -134,6 +177,22 @@ export default function App() {
     showToast(newState ? "Audio Sound Effects Enabled" : "Sound Muted", newState ? "🔊" : "🔇");
   };
 
+  // Dual Soundtrack Selector (Nakime Biwa / Tanjiro Hinokami Kagura)
+  const handleSelectSoundtrack = (trackName) => {
+    const resulting = sfx.toggleSoundtrack(trackName, (active) => {
+      setActiveSoundtrack(active);
+    });
+    setActiveSoundtrack(resulting);
+
+    if (resulting === 'nakime') {
+      showToast("鳴女 琵琶 鳴響: Nakime Biwa Infinity Castle OST Playing...", "🪕");
+    } else if (resulting === 'tanjiro') {
+      showToast("竈門炭治郎のうた • ヒノカミ神楽: Kamado Tanjiro Theme Playing...", "☀️");
+    } else {
+      showToast("Soundtrack Paused", "🔇");
+    }
+  };
+
   // Trigger Zenitsu Thunder Strike
   const handleZenitsuThunderclap = () => {
     sfx.playSlash();
@@ -151,12 +210,13 @@ export default function App() {
   const fetchData = async () => {
     try {
       setIsLoading(true);
-      const [resSlayers, resMissions, resDemons, resTeams, resOverview] = await Promise.all([
+      const [resSlayers, resMissions, resDemons, resTeams, resOverview, resDb] = await Promise.all([
         fetch('/api/slayers').then(r => r.json()),
         fetch('/api/missions').then(r => r.json()),
         fetch('/api/demons').then(r => r.json()),
         fetch('/api/teams').then(r => r.json()),
-        fetch('/api/overview').then(r => r.json())
+        fetch('/api/overview').then(r => r.json()),
+        fetch('/api/database/status').then(r => r.json()).catch(() => ({ connected: false }))
       ]);
 
       setSlayers(resSlayers.slayers || []);
@@ -165,6 +225,7 @@ export default function App() {
       setSquads(resTeams.squads || []);
       setReserveSlayers(resTeams.reserveSlayers || []);
       setOverview(resOverview || {});
+      if (resDb) setDbStatus(resDb);
     } catch (err) {
       console.error("Failed to fetch data:", err);
       showToast("Backend connection failed. Make sure server is running on port 5000.", "⚠️");
@@ -394,6 +455,104 @@ export default function App() {
     return demonRankFilter === 'All' || d.dangerRank === demonRankFilter;
   });
 
+  // If user opened the Admin Panel from the Login Gateway
+  if (isAdminOpen) {
+    return (
+      <div className="app-root">
+        {/* Dynamic Background Layer for Kokushibo Moon Admin Console */}
+        <div 
+          className="app-background-layer"
+          style={{
+            backgroundImage: `linear-gradient(180deg, rgba(18, 8, 22, 0.36) 0%, rgba(22, 10, 26, 0.46) 50%, rgba(10, 5, 14, 0.60) 100%), url('/images/kokushibo_moon_admin_bg.jpg')`
+          }}
+        />
+        <LiveBackgroundEffect mode="embers" />
+
+        <div className="app-container" style={{ paddingTop: '20px' }}>
+          {toast && (
+            <div className="toast-notice">
+              <span style={{ fontSize: '20px' }}>{toast.icon}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{toast.message}</span>
+            </div>
+          )}
+
+          {/* Top Quick Bar: Return to Login & Dual Soundtrack Controls */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
+            <button
+              onClick={() => { setIsAdminOpen(false); sfx.playSlash(); }}
+              className="btn-secondary"
+              style={{
+                borderColor: 'rgba(255, 183, 3, 0.45)',
+                background: 'rgba(12, 16, 28, 0.85)',
+                boxShadow: '0 0 16px rgba(255, 183, 3, 0.2)'
+              }}
+            >
+              <LogOut size={15} color="#ffb703" />
+              <span>← Return to Corps Login Screen (司令部関門へ)</span>
+            </button>
+
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                onClick={() => handleSelectSoundtrack('nakime')}
+                className="btn-secondary"
+                style={{
+                  borderColor: activeSoundtrack === 'nakime' ? '#ffb703' : 'rgba(157, 78, 221, 0.4)',
+                  background: activeSoundtrack === 'nakime' ? 'rgba(255, 183, 3, 0.2)' : 'rgba(14, 18, 30, 0.75)',
+                  boxShadow: activeSoundtrack === 'nakime' ? '0 0 14px rgba(255, 183, 3, 0.4)' : 'none',
+                  fontSize: '12px',
+                  padding: '6px 12px'
+                }}
+                title="Play Nakime's Biwa Infinity Castle Soundtrack"
+              >
+                <span>🪕 Nakime Biwa OST</span>
+              </button>
+
+              <button
+                onClick={() => handleSelectSoundtrack('tanjiro')}
+                className="btn-secondary"
+                style={{
+                  borderColor: activeSoundtrack === 'tanjiro' ? '#06d6a0' : 'rgba(157, 78, 221, 0.4)',
+                  background: activeSoundtrack === 'tanjiro' ? 'rgba(6, 214, 160, 0.2)' : 'rgba(14, 18, 30, 0.75)',
+                  boxShadow: activeSoundtrack === 'tanjiro' ? '0 0 14px rgba(6, 214, 160, 0.4)' : 'none',
+                  fontSize: '12px',
+                  padding: '6px 12px'
+                }}
+                title="Play Kamado Tanjiro no Uta / Hinokami Kagura Theme"
+              >
+                <span>☀️ Tanjiro Hinokami OST</span>
+              </button>
+
+              <button
+                onClick={handleToggleSound}
+                className="btn-secondary"
+                style={{ padding: '6px 12px', fontSize: '12px' }}
+                title="Toggle Sound Effects"
+              >
+                {soundEnabled ? <Volume2 size={14} color="#c77dff" /> : <VolumeX size={14} color="#9ba1b0" />}
+              </button>
+            </div>
+          </div>
+
+          <AdminPanel
+            slayers={slayers}
+            missions={missions}
+            demons={demons}
+            squads={squads}
+            teamSize={teamSize}
+            setTeamSize={setTeamSize}
+            onGenerateTeams={handleGenerateTeams}
+            onRegenerateTeams={handleRegenerateTeams}
+            onAssignMissions={handleAssignMissions}
+            onClearAssignments={handleClearAssignments}
+            onRestoreCanon={handleRestoreCanon}
+            fetchData={fetchData}
+            showToast={showToast}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return (
       <>
@@ -407,20 +566,38 @@ export default function App() {
           onLogin={handleLogin}
           soundEnabled={soundEnabled}
           onToggleSound={handleToggleSound}
+          onOpenAdmin={() => setIsAdminOpen(true)}
+          activeSoundtrack={activeSoundtrack}
+          onSelectSoundtrack={handleSelectSoundtrack}
+          dbStatus={dbStatus}
         />
       </>
     );
   }
 
+  const currentTabConfig = TAB_CONFIGS[activeTab] || TAB_CONFIGS.command;
+
   return (
-    <div className="app-container">
-      {/* Toast Notice */}
-      {toast && (
-        <div className="toast-notice">
-          <span style={{ fontSize: '20px' }}>{toast.icon}</span>
-          <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{toast.message}</span>
-        </div>
-      )}
+    <div className="app-root">
+      {/* Dynamic Tab Themed Background Layer */}
+      <div 
+        className="app-background-layer"
+        style={{
+          backgroundImage: `${currentTabConfig.overlay}, url('${currentTabConfig.bg}')`
+        }}
+      />
+
+      {/* Live Procedural Particle & Environmental Atmospheric Canvas */}
+      <LiveBackgroundEffect mode={currentTabConfig.effect} />
+
+      <div className="app-container">
+        {/* Toast Notice */}
+        {toast && (
+          <div className="toast-notice">
+            <span style={{ fontSize: '20px' }}>{toast.icon}</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{toast.message}</span>
+          </div>
+        )}
 
       {/* Demon Slayer Corps Master Banner */}
       <header className="corps-header">
@@ -448,16 +625,74 @@ export default function App() {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '8px',
-                background: 'rgba(255, 183, 3, 0.12)',
-                border: '1px solid rgba(255, 183, 3, 0.35)',
-                padding: '6px 12px',
+                background: `${currentUser.color || '#ffb703'}18`,
+                border: `1px solid ${currentUser.color || '#ffb703'}44`,
+                padding: '6px 14px',
                 borderRadius: '8px',
-                fontSize: '12px'
+                fontSize: '12px',
+                boxShadow: `0 0 12px ${currentUser.color || '#ffb703'}22`
               }}>
-                <span style={{ color: '#ffb703', fontWeight: 800 }}>⚡ {currentUser.name}</span>
-                <span style={{ color: '#ffd166', opacity: 0.85 }}>({currentUser.role})</span>
+                <span style={{ color: currentUser.color || '#ffb703', fontWeight: 800 }}>
+                  {currentUser.icon || '⚡'} {currentUser.name}
+                </span>
+                <span style={{ color: '#ffd166', opacity: 0.85, fontSize: '11px' }}>({currentUser.role})</span>
               </div>
             )}
+
+            {/* Supabase Cloud Database Status Badge */}
+            <div
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                background: dbStatus?.connected ? 'rgba(6, 214, 160, 0.15)' : 'rgba(255, 183, 3, 0.15)',
+                border: `1px solid ${dbStatus?.connected ? 'rgba(6, 214, 160, 0.4)' : 'rgba(255, 183, 3, 0.4)'}`,
+                padding: '5px 11px',
+                borderRadius: '8px',
+                fontSize: '11px',
+                fontWeight: 700,
+                color: dbStatus?.connected ? '#06d6a0' : '#ffd166',
+                boxShadow: dbStatus?.connected ? '0 0 12px rgba(6, 214, 160, 0.25)' : 'none'
+              }}
+              title={dbStatus?.connected ? "Connected to Supabase PostgreSQL Database" : "Running on In-Memory High-Speed Cache"}
+            >
+              <Database size={13} color={dbStatus?.connected ? '#06d6a0' : '#ffd166'} />
+              <span>{dbStatus?.connected ? "Supabase Cloud" : "DB: In-Memory"}</span>
+            </div>
+
+            {/* Soundtrack 1: Nakime Biwa OST */}
+            <button
+              onClick={() => handleSelectSoundtrack('nakime')}
+              className="btn-secondary"
+              style={{
+                borderColor: activeSoundtrack === 'nakime' ? '#ffb703' : 'rgba(157, 78, 221, 0.4)',
+                background: activeSoundtrack === 'nakime' ? 'rgba(255, 183, 3, 0.2)' : 'rgba(20, 25, 42, 0.65)',
+                boxShadow: activeSoundtrack === 'nakime' ? '0 0 16px rgba(255, 183, 3, 0.4)' : 'none'
+              }}
+              title="Toggle Nakime's Biwa Guitar Soundtrack (Infinity Castle Audio Theme)"
+            >
+              <span style={{ fontSize: '15px' }}>🪕</span>
+              <span style={{ color: activeSoundtrack === 'nakime' ? '#ffd166' : '#ffecd1' }}>
+                {activeSoundtrack === 'nakime' ? "Biwa: Playing" : "Nakime Biwa"}
+              </span>
+            </button>
+
+            {/* Soundtrack 2: Kamado Tanjiro no Uta / Hinokami Kagura OST */}
+            <button
+              onClick={() => handleSelectSoundtrack('tanjiro')}
+              className="btn-secondary"
+              style={{
+                borderColor: activeSoundtrack === 'tanjiro' ? '#06d6a0' : 'rgba(157, 78, 221, 0.4)',
+                background: activeSoundtrack === 'tanjiro' ? 'rgba(6, 214, 160, 0.2)' : 'rgba(20, 25, 42, 0.65)',
+                boxShadow: activeSoundtrack === 'tanjiro' ? '0 0 16px rgba(6, 214, 160, 0.4)' : 'none'
+              }}
+              title="Toggle Kamado Tanjiro no Uta Soundtrack (Hinokami Kagura Flute & Taiko Theme)"
+            >
+              <span style={{ fontSize: '15px' }}>☀️</span>
+              <span style={{ color: activeSoundtrack === 'tanjiro' ? '#06d6a0' : '#ffecd1' }}>
+                {activeSoundtrack === 'tanjiro' ? "Tanjiro: Playing" : "Tanjiro OST"}
+              </span>
+            </button>
 
             <button
               onClick={handleToggleSound}
@@ -565,7 +800,7 @@ export default function App() {
 
           <button
             className={`tab-btn ${activeTab === 'demons' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('demons'); sfx.playSlash(); }}
+            onClick={() => { setActiveTab('demons'); sfx.playNakimeShift(); }}
           >
             <Skull size={16} color="#ff4d6d" />
             <span>Twelve Kizuki & Demon Hierarchy</span>
@@ -603,56 +838,39 @@ export default function App() {
       {activeTab === 'command' && (
         <section>
           {/* =============================================================== */}
-          {/* ZENITSU AGATSUMA FRONT-PAGE HERO SHOWCASE                       */}
+          {/* DISPATCH COMMAND HEADQUARTERS HERO BANNER                       */}
           {/* =============================================================== */}
-          <div className="zenitsu-hero-banner">
-            <div className="zenitsu-pattern-bg"></div>
-
-            <div className="zenitsu-content-left">
-              <div className="zenitsu-avatar-frame">
-                <img
-                  src="/images/zenitsu.png"
-                  alt="Zenitsu Agatsuma"
-                  onError={(e) => { e.target.src = 'https://static.wikia.nocookie.net/kimetsu-no-yaiba/images/4/46/Zenitsu_Anime_Profile.png'; }}
-                />
-              </div>
-
-              <div className="zenitsu-text-area">
-                <div className="zenitsu-badge-row">
-                  <span className="thunder-badge">
-                    <Zap size={13} fill="#0d0f17" /> Thunder Breathing • 雷の呼吸
-                  </span>
-                  <span style={{ fontSize: '11px', background: 'rgba(0,0,0,0.5)', padding: '2px 8px', borderRadius: '4px', color: '#ffb703', border: '1px solid rgba(255,183,3,0.4)' }}>
-                    Rank: Kanoe • Combat Power: 86
-                  </span>
-                  <span style={{ fontSize: '11px', color: '#ffd166', fontWeight: 700 }}>
-                    ⚡ Godspeed Master
-                  </span>
+          <div className="command-banner-header">
+            <div className="command-banner-left">
+              <div className="command-banner-emblem">⛩️</div>
+              <div>
+                <div className="command-banner-subtitle">
+                  鬼殺隊 本部直属 • KASUGAI SQUAD FORMATION MATRIX
                 </div>
-
-                <div className="zenitsu-title">
-                  <span>Zenitsu Agatsuma</span>
-                  <span className="zenitsu-jp">我妻 善逸</span>
-                </div>
-
-                <div className="zenitsu-quote">
-                  "If you can only do one thing, hone it to the ultimate limit. Bleed for it, master it, and become the lightning itself!" — <em>雷の呼吸 壱ノ型 霹靂一閃 (Thunderclap and Flash)</em>
-                </div>
+                <h2 className="command-banner-title">
+                  Strategic Squad Formation & Mission Dispatch (隊士編成録)
+                </h2>
+                <p className="command-banner-desc">
+                  Assemble balanced Demon Slayer squads across Japan with zero duplicate assignments, multi-elemental synergies, and automated combat threat matching.
+                </p>
               </div>
             </div>
 
-            <div className="zenitsu-actions-right">
-              <button
-                className="btn-gold"
-                onClick={handleZenitsuThunderclap}
-                title="Trigger Thunderclap and Flash sound effect!"
-              >
-                <Zap size={16} fill="#0b0d13" />
-                <span>Thunderclap & Flash (霹靂一閃)</span>
-              </button>
-              <span style={{ fontSize: '11px', color: '#ffecd1', opacity: 0.85 }}>
-                Frontline Recon Specialist • Homing Crow Handler
-              </span>
+            <div className="command-banner-meta">
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                background: 'rgba(0, 180, 216, 0.12)',
+                border: '1px solid rgba(0, 180, 216, 0.35)',
+                padding: '6px 14px',
+                borderRadius: '8px',
+                fontSize: '12px'
+              }}>
+                <span className="pulse-dot"></span>
+                <span style={{ color: '#00b4d8', fontWeight: 700 }}>Kasugai Crows Ready</span>
+              </div>
+              <span className="command-banner-hashira-tag">Hashira Council Directives Active</span>
             </div>
           </div>
 
@@ -1750,6 +1968,7 @@ export default function App() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }
