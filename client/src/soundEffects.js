@@ -60,6 +60,80 @@ class SoundEffectsManager {
     }
   }
 
+  // Cinematic Nichirin Katana Draw and Godspeed Slash
+  playSwordDrawAndSlash() {
+    if (!this.enabled) return;
+    try {
+      this.init();
+      if (!this.ctx) return;
+      const t = this.ctx.currentTime;
+
+      // 1. Steel Blade Sheath Ring (Metallic unsheathing scraper)
+      const ringOsc = this.ctx.createOscillator();
+      const ringGain = this.ctx.createGain();
+      ringOsc.type = "sine";
+      ringOsc.frequency.setValueAtTime(2400, t);
+      ringOsc.frequency.exponentialRampToValueAtTime(3200, t + 0.18);
+      ringGain.gain.setValueAtTime(0.01, t);
+      ringGain.gain.linearRampToValueAtTime(0.2, t + 0.05);
+      ringGain.gain.exponentialRampToValueAtTime(0.001, t + 0.45);
+      ringOsc.connect(ringGain);
+      ringGain.connect(this.ctx.destination);
+      ringOsc.start(t);
+      ringOsc.stop(t + 0.46);
+
+      // 2. High-speed air displacement whoosh
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.4);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (this.ctx.sampleRate * 0.12));
+      }
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = "bandpass";
+      filter.frequency.setValueAtTime(3500, t + 0.12);
+      filter.frequency.exponentialRampToValueAtTime(250, t + 0.45);
+      filter.Q.value = 3.0;
+      const noiseGain = this.ctx.createGain();
+      noiseGain.gain.setValueAtTime(0.3, t + 0.12);
+      noiseGain.gain.exponentialRampToValueAtTime(0.01, t + 0.48);
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(this.ctx.destination);
+      noise.start(t + 0.12);
+
+      // 3. Lightning / Nichirin Blade Impact Crack
+      const strikeOsc = this.ctx.createOscillator();
+      const strikeGain = this.ctx.createGain();
+      strikeOsc.type = "sawtooth";
+      strikeOsc.frequency.setValueAtTime(1500, t + 0.25);
+      strikeOsc.frequency.exponentialRampToValueAtTime(70, t + 0.6);
+      strikeGain.gain.setValueAtTime(0.38, t + 0.25);
+      strikeGain.gain.exponentialRampToValueAtTime(0.005, t + 0.65);
+      strikeOsc.connect(strikeGain);
+      strikeGain.connect(this.ctx.destination);
+      strikeOsc.start(t + 0.25);
+      strikeOsc.stop(t + 0.66);
+
+      // 4. Sub-bass shockwave boom
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      subOsc.type = "sine";
+      subOsc.frequency.setValueAtTime(160, t + 0.28);
+      subOsc.frequency.exponentialRampToValueAtTime(30, t + 0.75);
+      subGain.gain.setValueAtTime(0.45, t + 0.28);
+      subGain.gain.exponentialRampToValueAtTime(0.01, t + 0.8);
+      subOsc.connect(subGain);
+      subGain.connect(this.ctx.destination);
+      subOsc.start(t + 0.28);
+      subOsc.stop(t + 0.82);
+    } catch (e) {
+      // Audio might be blocked before user gesture
+    }
+  }
+
   // Kasugai Crow Dispatch Chirp
   playCrow() {
     if (!this.enabled) return;

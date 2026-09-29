@@ -3,6 +3,7 @@ import confetti from 'canvas-confetti';
 import { Zap, Lock, Mail, Swords, Volume2, VolumeX, ShieldAlert } from 'lucide-react';
 import { sfx } from './soundEffects';
 import LiveBackgroundEffect from './LiveBackgroundEffect';
+import SwordSlashTransition from './SwordSlashTransition';
 
 export default function LoginPage({
   onLogin,
@@ -57,6 +58,8 @@ export default function LoginPage({
 
   const [email, setEmail] = useState(presets[0].email);
   const [password, setPassword] = useState(presets[0].password);
+  const [isSlashing, setIsSlashing] = useState(false);
+  const [pendingUser, setPendingUser] = useState(null);
 
   const handleSelectPreset = (p) => {
     setActivePreset(p.id);
@@ -67,14 +70,6 @@ export default function LoginPage({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    sfx.playSlash();
-
-    confetti({
-      particleCount: 75,
-      spread: 65,
-      origin: { y: 0.6 },
-      colors: ['#ffb703', '#fb8500', '#ffffff', '#ffd166']
-    });
 
     const chosen = {
       id: activePresetObj.id,
@@ -88,11 +83,26 @@ export default function LoginPage({
       isAdmin: activePresetObj.isAdmin || email.toLowerCase().includes('oyakata') || email.toLowerCase().includes('admin')
     };
 
-    onLogin(chosen);
+    setPendingUser(chosen);
+    setIsSlashing(true);
+  };
+
+  const handleSlashComplete = () => {
+    if (pendingUser && onLogin) {
+      onLogin(pendingUser);
+    }
   };
 
   return (
-    <div className="login-page-container">
+    <div className={`login-page-container ${isSlashing ? 'slashing-mode' : ''}`}>
+      {/* Cinematic Nichirin Katana Sword Slash Animation on Login */}
+      {isSlashing && (
+        <SwordSlashTransition
+          characterName={pendingUser?.name || 'Zenitsu'}
+          onComplete={handleSlashComplete}
+        />
+      )}
+
       {/* Live Procedural Lightning & Thunder Particle Canvas */}
       <LiveBackgroundEffect mode="thunder" />
 

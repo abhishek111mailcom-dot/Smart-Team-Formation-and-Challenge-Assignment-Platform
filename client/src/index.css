@@ -1713,3 +1713,250 @@ h1, h2, h3, h4, h5, h6 {
   overflow-y: auto;
 }
 
+/* =================================================================== */
+/* CINEMATIC NICHIRIN KATANA SWORD SLASH TRANSITION                    */
+/* =================================================================== */
+.sword-slash-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 99999;
+  pointer-events: none;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Split Screen Halves */
+.split-half {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.split-top {
+  clip-path: polygon(0 0, 100% 0, 100% 70%, 0 30%);
+}
+
+.split-bottom {
+  clip-path: polygon(0 30%, 100% 70%, 100% 100%, 0 100%);
+}
+
+.split-ambient-bg {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(7, 9, 14, 0.96) 0%, rgba(14, 10, 22, 0.98) 100%);
+  backdrop-filter: blur(14px);
+}
+
+.split-top.slide-top {
+  animation: slide-diagonal-top 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.split-bottom.slide-bottom {
+  animation: slide-diagonal-bottom 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes slide-diagonal-top {
+  0% { transform: translate(0, 0); opacity: 1; }
+  60% { opacity: 0.9; }
+  100% { transform: translate(160px, -160px); opacity: 0; }
+}
+
+@keyframes slide-diagonal-bottom {
+  0% { transform: translate(0, 0); opacity: 1; }
+  60% { opacity: 0.9; }
+  100% { transform: translate(-160px, 160px); opacity: 0; }
+}
+
+/* Searing Laser Cut Trail */
+.slash-trail-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 10;
+  pointer-events: none;
+}
+
+.slash-laser-line {
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-dasharray: 2200;
+  stroke-dashoffset: 2200;
+  filter: drop-shadow(0 0 18px #ffb703) drop-shadow(0 0 45px #ff4d6d);
+}
+
+.slash-laser-line.active {
+  animation: laser-strike 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.slash-laser-glow {
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-dasharray: 2200;
+  stroke-dashoffset: 2200;
+  filter: drop-shadow(0 0 25px #ffffff) drop-shadow(0 0 50px #ffd166);
+}
+
+.slash-laser-glow.active {
+  animation: laser-strike 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes laser-strike {
+  0% { stroke-dashoffset: 2200; opacity: 1; }
+  70% { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: 0; opacity: 0; }
+}
+
+/* The Sword Flying Across Screen */
+.nichirin-sword-actor {
+  position: absolute;
+  z-index: 15;
+  width: 750px;
+  height: 130px;
+  pointer-events: none;
+  transform: translate(-150%, -150%) rotate(24deg);
+  opacity: 0;
+}
+
+.nichirin-sword-actor.slashing {
+  animation: katana-godspeed-sweep 0.42s cubic-bezier(0.05, 0.9, 0.2, 1) forwards;
+}
+
+.nichirin-katana-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+@keyframes katana-godspeed-sweep {
+  0% {
+    opacity: 0;
+    transform: translate(-140%, -120%) rotate(24deg) scale(0.85);
+  }
+  20% {
+    opacity: 1;
+  }
+  60% {
+    opacity: 1;
+    transform: translate(20%, 30%) rotate(24deg) scale(1.15);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(160%, 150%) rotate(24deg) scale(1.05);
+  }
+}
+
+/* Seam Light Rays Eruption */
+.sword-seam-burst {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seam-core-line {
+  position: absolute;
+  width: 140vw;
+  height: 8px;
+  background: linear-gradient(90deg, transparent, #ffffff, #ffd166, #ff4d6d, transparent);
+  transform: rotate(24deg);
+  filter: blur(2px) drop-shadow(0 0 30px #ffd166);
+  animation: seam-flare 0.65s ease-out forwards;
+}
+
+.seam-glow-rays {
+  position: absolute;
+  width: 140vw;
+  height: 250px;
+  background: radial-gradient(ellipse at center, rgba(255, 209, 102, 0.4) 0%, rgba(255, 77, 109, 0.25) 45%, transparent 70%);
+  transform: rotate(24deg);
+  filter: blur(25px);
+  animation: rays-burst 0.75s ease-out forwards;
+}
+
+@keyframes seam-flare {
+  0% { transform: rotate(24deg) scaleX(0); opacity: 0; }
+  35% { transform: rotate(24deg) scaleX(1); opacity: 1; height: 16px; }
+  100% { transform: rotate(24deg) scaleX(1.3); opacity: 0; height: 2px; }
+}
+
+@keyframes rays-burst {
+  0% { opacity: 0; transform: rotate(24deg) scale(0.6); }
+  40% { opacity: 1; transform: rotate(24deg) scale(1.2); }
+  100% { opacity: 0; transform: rotate(24deg) scale(1.5); }
+}
+
+/* Central Kanji Flash */
+.sword-impact-cluster {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.kanji-flash {
+  font-family: var(--font-jp);
+  font-size: 140px;
+  font-weight: 900;
+  line-height: 1;
+  animation: kanji-impact 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  letter-spacing: -4px;
+}
+
+.breathing-form-subtext {
+  font-family: var(--font-jp);
+  font-size: 16px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.15em;
+  text-shadow: 0 0 15px rgba(255, 183, 3, 0.8), 0 0 30px rgba(255, 77, 109, 0.6);
+  margin-top: -10px;
+  animation: subtext-fade 0.8s ease-out forwards;
+}
+
+@keyframes kanji-impact {
+  0% {
+    opacity: 0;
+    transform: scale(2.8) rotate(-15deg);
+    filter: blur(12px);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+  75% {
+    opacity: 0.95;
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.35);
+    filter: blur(8px);
+  }
+}
+
+@keyframes subtext-fade {
+  0% { opacity: 0; transform: translateY(15px); }
+  35% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 0.9; }
+  100% { opacity: 0; transform: translateY(-10px); }
+}
+
+
