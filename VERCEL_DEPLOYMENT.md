@@ -12,19 +12,24 @@ This platform is configured for **1-click deployment on Vercel** as a full-stack
 
 ---
 
-### Step 2: Configure Project & Environment Variables
-In the Vercel project configuration screen:
-1. **Framework Preset:** Leave as `Vite` (or `Other` / auto-detected).
-2. **Root Directory:** `./` (default).
-3. **Build Command:** `npm run build` (auto-detected from `vercel.json`).
-4. **Output Directory:** `client/dist` (auto-detected from `vercel.json`).
+### Step 2: Multi-Service Auto-Detection & Environment Variables
+Vercel automatically detects the multi-service architecture from `vercel.json`:
+- **Web Service (`web`):** Built from `./client` (`npm run build` -> `dist`)
+- **API Service (`api`):** Built from `./server` (Express serverless lambda `index.js`)
 
-Expand **"Environment Variables"** and add:
+> 💡 **Notice "Import multi-service project" card?**
+> If Vercel shows the prompt asking for `vercel.json`, simply click the **refresh icon (`⟳`)** in that box so Vercel detects the updated `vercel.json` from the repository!
 
-| Key | Value | Example |
-|---|---|---|
-| `SUPABASE_URL` | Your Supabase project URL | `https://tewqlfatjevdrgkmyfya.supabase.co` |
-| `SUPABASE_KEY` | Your Supabase API Key (Publishable or Anon) | `sb_publishable_...` |
+#### Set Environment Variables:
+Expand **"Environment Variables"** and configure:
+
+1. **First Variable:**
+   - **Key:** `SUPABASE_KEY` *(make sure this goes in the "Key" box)*
+   - **Value:** `sb_publishable_OedBYswDOfMoqtWmrwFs7w_tTruW7bM` *(paste key here in "Value" box)*
+2. Click **"+ Add More"**
+3. **Second Variable:**
+   - **Key:** `SUPABASE_URL`
+   - **Value:** `https://tewqlfatjevdrgkmyfya.supabase.co`
 
 *(Note: Even without environment variables, the platform will automatically run in high-speed In-Memory mode without crashing!)*
 
