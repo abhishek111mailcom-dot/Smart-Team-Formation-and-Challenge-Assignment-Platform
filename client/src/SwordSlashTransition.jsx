@@ -3,79 +3,93 @@ import confetti from 'canvas-confetti';
 import { sfx } from './soundEffects';
 
 export default function SwordSlashTransition({ onComplete, characterName = 'Zenitsu' }) {
-  const [phase, setPhase] = useState('init'); // 'init' | 'charging' | 'slashing' | 'splitting' | 'complete'
+  const [phase, setPhase] = useState('charging'); // 'charging' | 'slashing' | 'splitting' | 'fading'
 
   const isThunder = characterName?.toLowerCase().includes('zenitsu') || true;
   const bladeAuraColor = isThunder ? '#ffb703' : '#e63946';
   const secondaryAuraColor = isThunder ? '#ffd166' : '#ff4d6d';
 
   useEffect(() => {
-    // 1. Start audio
+    // 1. Play Katana Draw and air displacement
     sfx.playSwordDrawAndSlash();
 
-    // 2. Phase progression
-    const tCharge = setTimeout(() => {
-      setPhase('charging');
-    }, 80);
+    // 2. Play Nakime's iconic Biwa strike on slash cut
+    const tBiwa = setTimeout(() => {
+      sfx.playNakimeShift();
+    }, 220);
 
+    // 3. Trigger Searing Slash Phase
     const tSlash = setTimeout(() => {
       setPhase('slashing');
 
       // Burst of elemental sparks
       confetti({
-        particleCount: 85,
-        spread: 100,
+        particleCount: 90,
+        spread: 110,
         origin: { x: 0.5, y: 0.5 },
         colors: isThunder
-          ? ['#ffb703', '#ffd166', '#ffffff', '#fb8500']
-          : ['#e63946', '#ff4d6d', '#ffd166', '#ffffff']
+          ? ['#ffb703', '#ffd166', '#ffffff', '#fb8500', '#c77dff']
+          : ['#e63946', '#ff4d6d', '#ffd166', '#ffffff', '#c77dff']
       });
-    }, 280);
+    }, 220);
 
+    // 4. Split and Slide the Screen Halves Apart
     const tSplit = setTimeout(() => {
       setPhase('splitting');
-    }, 450);
+    }, 440);
 
+    // 5. Smooth Dissolve / Cross-fade into Inner Headquarters
+    const tFade = setTimeout(() => {
+      setPhase('fading');
+    }, 920);
+
+    // 6. Complete Transition
     const tEnd = setTimeout(() => {
-      setPhase('complete');
       if (onComplete) onComplete();
-    }, 1150);
+    }, 1300);
 
     return () => {
-      clearTimeout(tCharge);
+      clearTimeout(tBiwa);
       clearTimeout(tSlash);
       clearTimeout(tSplit);
+      clearTimeout(tFade);
       clearTimeout(tEnd);
     };
   }, []);
 
   return (
     <div className={`sword-slash-overlay ${phase}`}>
-      {/* Background Split Halves (Sliding apart along the cut) */}
-      <div className={`split-half split-top ${phase === 'splitting' ? 'slide-top' : ''}`}>
-        <div className="split-ambient-bg" />
+      {/* Background Split Halves (Sliding apart organically along the cut line) */}
+      <div className={`split-half split-top ${phase === 'splitting' || phase === 'fading' ? 'slide-top' : ''}`}>
+        <div className="split-ambient-glass" />
       </div>
 
-      <div className={`split-half split-bottom ${phase === 'splitting' ? 'slide-bottom' : ''}`}>
-        <div className="split-ambient-bg" />
+      <div className={`split-half split-bottom ${phase === 'splitting' || phase === 'fading' ? 'slide-bottom' : ''}`}>
+        <div className="split-ambient-glass" />
       </div>
 
       {/* Blinding Light Rays Erupting from the Seam */}
-      {(phase === 'slashing' || phase === 'splitting') && (
+      {(phase === 'slashing' || phase === 'splitting' || phase === 'fading') && (
         <div className="sword-seam-burst">
           <div className="seam-core-line" style={{ '--aura': bladeAuraColor }} />
           <div className="seam-glow-rays" />
         </div>
       )}
 
-      {/* Center Impact Kanji Flash: 滅 (Metsu / Slay) */}
+      {/* Center Impact Kanji Flash: 滅 (Metsu / Slay) with Nakime Dimensional Seal */}
       {(phase === 'slashing' || phase === 'splitting') && (
         <div className="sword-impact-cluster">
-          <div className="kanji-flash" style={{ color: bladeAuraColor, textShadow: `0 0 35px ${bladeAuraColor}, 0 0 70px ${secondaryAuraColor}` }}>
+          <div
+            className="kanji-flash"
+            style={{
+              color: bladeAuraColor,
+              textShadow: `0 0 35px ${bladeAuraColor}, 0 0 70px ${secondaryAuraColor}, 0 0 100px rgba(199, 125, 255, 0.8)`
+            }}
+          >
             滅
           </div>
           <div className="breathing-form-subtext">
-            {isThunder ? '雷の呼吸 壱ノ型 霹靂一閃 神速' : '日の呼吸 円舞'}
+            {isThunder ? '雷の呼吸 壱ノ型 霹靂一閃 神速 • 鳴女 琵琶 転移' : '日の呼吸 円舞 • 鳴女 琵琶 転移'}
           </div>
         </div>
       )}
@@ -88,7 +102,6 @@ export default function SwordSlashTransition({ onComplete, characterName = 'Zeni
           style={{ filter: `drop-shadow(0 0 16px ${bladeAuraColor}) drop-shadow(0 0 32px ${secondaryAuraColor})` }}
         >
           <defs>
-            {/* Blade Steel Gradient */}
             <linearGradient id="bladeSteel" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#2b2d42" />
               <stop offset="60%" stopColor="#8d99ae" />
@@ -96,14 +109,12 @@ export default function SwordSlashTransition({ onComplete, characterName = 'Zeni
               <stop offset="100%" stopColor="#ffffff" />
             </linearGradient>
 
-            {/* Hamon Temper Line Gradient */}
             <linearGradient id="hamonWave" x1="0%" y1="0%" x2="100%" y2="0%">
               <stop offset="0%" stopColor="#ffd166" />
               <stop offset="50%" stopColor="#ffb703" />
               <stop offset="100%" stopColor="#ffffff" />
             </linearGradient>
 
-            {/* Gold Accents */}
             <linearGradient id="goldHilt" x1="0%" y1="0%" x2="100%" y2="100%">
               <stop offset="0%" stopColor="#ffd166" />
               <stop offset="50%" stopColor="#e09f3e" />
@@ -196,7 +207,7 @@ export default function SwordSlashTransition({ onComplete, characterName = 'Zeni
           y1="150"
           x2="1100"
           y2="850"
-          className={`slash-laser-line ${phase === 'slashing' || phase === 'splitting' ? 'active' : ''}`}
+          className={`slash-laser-line ${phase !== 'charging' ? 'active' : ''}`}
           style={{ stroke: bladeAuraColor }}
         />
         <line
@@ -204,7 +215,7 @@ export default function SwordSlashTransition({ onComplete, characterName = 'Zeni
           y1="150"
           x2="1100"
           y2="850"
-          className={`slash-laser-glow ${phase === 'slashing' || phase === 'splitting' ? 'active' : ''}`}
+          className={`slash-laser-glow ${phase !== 'charging' ? 'active' : ''}`}
           style={{ stroke: '#ffffff' }}
         />
       </svg>

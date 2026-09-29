@@ -129,6 +129,14 @@ class SoundEffectsManager {
       subGain.connect(this.ctx.destination);
       subOsc.start(t + 0.28);
       subOsc.stop(t + 0.82);
+
+      // 5. Nakime's Iconic Biwa Dimensional Strike & Reverb (鳴女 琵琶 鳴響)
+      setTimeout(() => {
+        this.playNakimeBiwa(1.0);
+      }, 240);
+      setTimeout(() => {
+        this.playNakimeBiwa(1.33); // Dimensional fourth interval echo
+      }, 460);
     } catch (e) {
       // Audio might be blocked before user gesture
     }

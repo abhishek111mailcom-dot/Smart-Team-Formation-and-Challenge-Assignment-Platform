@@ -578,7 +578,7 @@ export default function App() {
   const currentTabConfig = TAB_CONFIGS[activeTab] || TAB_CONFIGS.command;
 
   return (
-    <div className="app-root">
+    <div className="app-root dashboard-entrance-reveal">
       {/* Dynamic Tab Themed Background Layer */}
       <div 
         className="app-background-layer"
