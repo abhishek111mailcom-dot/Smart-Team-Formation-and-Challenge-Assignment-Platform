@@ -33,6 +33,14 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 
+// Normalize URL in case Vercel Serverless Function rewrites strip or modify the /api prefix
+app.use((req, res, next) => {
+  if (!req.url.startsWith("/api") && req.url !== "/") {
+    req.url = "/api" + req.url;
+  }
+  next();
+});
+
 // In-Memory / Local Cache State (synced with Supabase when connected)
 let slayers = JSON.parse(JSON.stringify(INITIAL_SLAYERS));
 let missions = JSON.parse(JSON.stringify(INITIAL_MISSIONS));
@@ -611,8 +619,15 @@ app.get("/api/overview", (req, res) => {
   });
 });
 
-// Start Express server and initialize DB
-app.listen(PORT, async () => {
-  console.log(`🗡️ Demon Slayer Corps Command Server running on http://localhost:${PORT}`);
-  await initDatabase();
-});
+// Start Express server locally or initialize for Vercel Serverless Function
+if (!process.env.VERCEL) {
+  app.listen(PORT, async () => {
+    console.log(`🗡️ Demon Slayer Corps Command Server running on http://localhost:${PORT}`);
+    await initDatabase();
+  });
+} else {
+  // In Vercel serverless environment, initialize DB on cold start
+  initDatabase().catch(err => console.warn("Vercel DB init notice:", err.message));
+}
+
+export default app;

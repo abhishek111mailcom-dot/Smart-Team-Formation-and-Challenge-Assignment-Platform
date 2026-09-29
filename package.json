@@ -7,10 +7,17 @@
     "dev:server": "node --watch server/index.js",
     "dev:client": "npm run dev --prefix client",
     "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
-    "build": "npm run build --prefix client",
+    "build": "npm --prefix client install && npm --prefix client run build",
     "start": "node server/index.js"
   },
   "devDependencies": {
     "concurrently": "^9.2.4"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.117.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.4",
+    "express": "^5.2.1",
+    "pg": "^8.23.0"
   }
 }
